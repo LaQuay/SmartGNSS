@@ -2,7 +2,6 @@ import logging
 import time
 import urllib.request
 
-import requests
 from flask_restful import reqparse
 import werkzeug
 from haversine import haversine
@@ -22,6 +21,8 @@ entry_parser.add_argument("date", type=str)
 
 location_parser = reqparse.RequestParser()
 location_parser.add_argument("gps", type=dict)
+location_parser.add_argument("ip", type=dict)
+location_parser.add_argument("wifi", type=dict)
 
 entry_parser.add_argument("user_file", type=werkzeug.datastructures.FileStorage, location="files")
 
@@ -31,10 +32,11 @@ FINISHED_RESPONSE_STATUS = "FINISHED"
 SLEEP_TIME = 5
 
 
+
 class EntryHandler:
     class Entries(Resource):
         def get(self):
-            response = self.repository.get_all_entries()
+            response = self.api_repository.get_all_entries()
 
             return Response.success(
                 [translator.entry_translator(entry) for entry in response])
@@ -55,7 +57,7 @@ class EntryHandler:
 
             entry = Entry(value=value, date=date)
 
-            result = self.repository.add_entry(entry)
+            result = self.api_repository.add_entry(entry)
 
             if result:
                 return Response.success({"internal_id": result})
@@ -64,7 +66,7 @@ class EntryHandler:
 
     class Entry(Resource):
         def get(self, entry_id):
-            response = self.repository.get_entry(entry_id)
+            response = self.api_repository.get_entry(entry_id)
 
             if response:
                 return Response.success(translator.entry_translator(response))
@@ -73,7 +75,7 @@ class EntryHandler:
         def put(self, entry_id=None):
             args = entry_parser.parse_args()
 
-            response = self.repository.get_entry(entry_id)
+            response = self.api_repository.get_entry(entry_id)
             if not response:
                 return Response.error(NOT_EXISTS_ID)
 
@@ -93,7 +95,7 @@ class EntryHandler:
                 "date": date
             }
 
-            response = self.repository.update_entry(entry_id, entry)
+            response = self.api_repository.update_entry(entry_id, entry)
 
             if response:
                 return Response.success({"internal_id": response})
@@ -101,22 +103,20 @@ class EntryHandler:
             return Response.error(GENERIC)
 
         def delete(self, entry_id=None):
-            response = self.repository.get_entry(entry_id)
+            response = self.api_repository.get_entry(entry_id)
 
             if response:
-                result = self.repository.delete_entry(entry_id)
+                result = self.api_repository.delete_entry(entry_id)
                 if result:
                     return Response.success({"internal_id": result})
             return Response.error(NOT_EXISTS_ID)
 
 
-ipinfotoken = "6f49f36f5c1a2b"
-
-
 class GeolocationHandler:
     class IP(Resource):
         def get(self, ip):
-            response = requests.get(f"https://www.ipinfo.io/{ip}?token={ipinfotoken}")
+            response = self.geo_repository.get_info_from_ip(ip)
+            print(response)
 
             if response:
                 return Response.success(response.json())
@@ -164,3 +164,53 @@ class GeolocationHandler:
             d = haversine(coords, gps_latlon)
 
             return Response.success({"data": d/10000})
+
+    class WIFI(Resource):
+        def get(self, wifi_name):
+            response = self.geo_repository.get_info_from_wifi(wifi_name)
+
+            print(response)
+            if response:
+                return Response.success(response)
+            return Response.error(GENERIC)
+
+    class Location(Resource):
+        def get(self):
+            args = location_parser.parse_args()
+
+            gps_info = args.get("gps", None)
+            gps_latlon = gps_info.get("latlon", None)
+
+            ip_info = args.get("ip", None)
+            ip_address = None
+            if ip_info is not None:
+                ip_address = ip_info.get("address", None)
+
+            wifi_info = args.get("wifi", None)
+            wifi_ssid = None
+            if wifi_info is not None:
+                wifi_ssid = wifi_info.get("ssid", None)
+
+            ip_locations = self.geo_repository.get_locations_from_ip(ip_address)
+            wifi_locations = self.geo_repository.get_locations_from_wifi(wifi_ssid)
+
+            score_ip = self.geo_repository.get_ip_score(ip_locations, gps_latlon)
+
+            score_wifi = self.geo_repository.get_wifi_score(wifi_locations, gps_latlon)
+
+            return Response.success({
+                "info": {
+                    "info": f"Score obtained for location {gps_latlon}",
+                    "help": "Score between 0 and 1 (max). From correlating the different inputs "
+                            "given by the user",
+                    "available_inputs": ["gps, ip, wifi"]
+                },
+                "ip": {
+                    "locations": ip_locations,
+                    "score": round(score_ip, 4)
+                },
+                "wifi": {
+                    "locations": wifi_locations,
+                    "score": round(score_wifi, 4)
+                }
+            })

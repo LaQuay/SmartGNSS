@@ -18,8 +18,13 @@ class Resources:
         api.add_resource(EntryHandler.Entry, '/entries/<string:entry_id>',
                          strict_slashes=False)
 
+        api.add_resource(GeolocationHandler.Location, '/geolocate/',
+                         strict_slashes=False)
+
         api.add_resource(GeolocationHandler.IP, '/geolocate/ip/<string:ip>',
                          strict_slashes=False)
 
         api.add_resource(GeolocationHandler.GNSS, '/geolocate/gnss/',
+                         strict_slashes=False)
+        api.add_resource(GeolocationHandler.WIFI, '/geolocate/wifi/<string:wifi_name>',
                          strict_slashes=False)
