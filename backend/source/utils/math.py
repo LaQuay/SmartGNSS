@@ -5,6 +5,8 @@ def haversine(lon1, lat1, lon2, lat2):
     """
     Calculate the great circle distance between two points
     on the earth (specified in decimal degrees)
+
+    Return exact kilometers
     """
     lon1 = float(lon1)
     lat1 = float(lat1)
@@ -19,4 +21,4 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * asin(sqrt(a))
     # Radius of earth in kilometers is 6371
     km = 6371 * c
-    return km
+    return int(round(km*100))

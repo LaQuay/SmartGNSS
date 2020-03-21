@@ -138,9 +138,9 @@ class GeolocationHandler:
             ip_locations = self.geo_repository.get_locations_from_ip(ip_address)
             wifi_locations = self.geo_repository.get_locations_from_wifi(wifi_ssid)
 
-            score_ip = self.geo_repository.get_ip_score(ip_locations, gps_latlon)
+            score_ip = self.geo_repository.get_ip_scores(ip_locations, gps_latlon)
 
-            score_wifi = self.geo_repository.get_wifi_score(wifi_locations, gps_latlon)
+            score_wifi = self.geo_repository.get_wifi_scores(wifi_locations, gps_latlon)
 
             return Response.success({
                 "info": {
@@ -151,10 +151,10 @@ class GeolocationHandler:
                 },
                 "ip": {
                     "locations": ip_locations,
-                    "score": round(score_ip, 4)
+                    "score": score_ip
                 },
                 "wifi": {
                     "locations": wifi_locations,
-                    "score": round(score_wifi, 4)
+                    "score": score_wifi
                 }
             })

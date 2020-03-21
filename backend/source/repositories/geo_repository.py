@@ -64,25 +64,29 @@ class GeoRepository:
         return locations
 
     @staticmethod
-    def get_ip_score(ip_locations, user_gps_location):
-        # TODO It just takes the first location
-        first_lon = ip_locations[0].split(",")[1]
-        first_lat = ip_locations[0].split(",")[0]
-        second_lon = user_gps_location.split(",")[1]
-        second_lat = user_gps_location.split(",")[0]
+    def get_ip_scores(ip_locations, user_gps_location):
+        scores = []
+        for ip_location in ip_locations:
+            first_lon = ip_location.split(",")[1]
+            first_lat = ip_location.split(",")[0]
+            second_lon = user_gps_location.split(",")[1]
+            second_lat = user_gps_location.split(",")[0]
 
-        distance = math.haversine(first_lon, first_lat, second_lon, second_lat)
+            score = math.haversine(first_lon, first_lat, second_lon, second_lat) / MAX_SCORE
+            scores.append(round(score, 4))
 
-        return distance / MAX_SCORE
+        return scores
 
     @staticmethod
-    def get_wifi_score(wifi_locations, user_gps_location):
-        # TODO It just takes the first location
-        first_lon = wifi_locations[0].split(",")[1]
-        first_lat = wifi_locations[0].split(",")[0]
-        second_lon = user_gps_location.split(",")[1]
-        second_lat = user_gps_location.split(",")[0]
+    def get_wifi_scores(wifi_locations, user_gps_location):
+        scores = []
+        for wifi_location in wifi_locations:
+            first_lon = wifi_location.split(",")[1]
+            first_lat = wifi_location.split(",")[0]
+            second_lon = user_gps_location.split(",")[1]
+            second_lat = user_gps_location.split(",")[0]
 
-        distance = math.haversine(first_lon, first_lat, second_lon, second_lat)
+            score = math.haversine(first_lon, first_lat, second_lon, second_lat) / MAX_SCORE
+            scores.append(round(score, 4))
 
-        return distance / MAX_SCORE
+        return scores
