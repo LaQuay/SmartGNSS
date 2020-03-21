@@ -1,10 +1,13 @@
 import logging
 import time
+import urllib.request
 
 import requests
 from flask_restful import reqparse
 import werkzeug
+from haversine import haversine
 
+import utils
 from errors.api_errors import GENERIC, NOT_EXISTS_ID, FIELD_NOT_VALID
 from models.models import Entry
 from resources import Resource, Response
@@ -16,6 +19,9 @@ logger = logging.getLogger(__name__)
 entry_parser = reqparse.RequestParser()
 entry_parser.add_argument("value", type=str)
 entry_parser.add_argument("date", type=str)
+
+location_parser = reqparse.RequestParser()
+location_parser.add_argument("gps", type=dict)
 
 entry_parser.add_argument("user_file", type=werkzeug.datastructures.FileStorage, location="files")
 
@@ -118,10 +124,13 @@ class GeolocationHandler:
 
     class GNSS(Resource):
         def post(self):
-            args = entry_parser.parse_args()
-            user_file = args["user_file"]
+            gps_args = location_parser.parse_args()
 
-            # TODO: read position from file
+            gps_info = gps_args.get("gps", None)
+            gps_latlon = gps_info.get("latlon", None)
+
+            raw_gnss_args = entry_parser.parse_args()
+            user_file = raw_gnss_args["user_file"]
 
             headers = {
                 'accept': 'application/json',
@@ -144,13 +153,14 @@ class GeolocationHandler:
                     break
                 time.sleep(SLEEP_TIME)
 
-            # TODO
             # Unzip result
-            # Read position from file
-            # Compare with provided position
-            # If jason_position == provided position
-            # Return True
-            # Else
-            # Return False
+            result_zip = urllib.request.urlretrieve(result_url)
+            results_folder = (result_zip.split("/")[-1]).split(".")[0]
+            utils.unzip_result(result_zip)
 
-            return Response.success({"data": True})
+            # Read position from file
+            coords = utils.jason_csv_to_coords(f"data/{results_folder}")
+
+            d = haversine(coords, gps_latlon)
+
+            return Response.success({"data": d/10000})
