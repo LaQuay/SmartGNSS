@@ -123,11 +123,8 @@ class GeolocationHandler:
             return Response.error(GENERIC)
 
     class GNSS(Resource):
-        def post(self):
-            gps_args = location_parser.parse_args()
-
-            gps_info = gps_args.get("gps", None)
-            gps_latlon = gps_info.get("latlon", None)
+        def post(self, gps):
+            gps_latlon = gps.split(",")
 
             raw_gnss_args = entry_parser.parse_args()
             user_file = raw_gnss_args["user_file"]

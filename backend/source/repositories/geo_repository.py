@@ -62,7 +62,7 @@ class GeoRepository:
             locations.append(f"{result['trilat']},{result['trilong']}")
 
         return locations
-
+    
     @staticmethod
     def get_ip_score(ip_locations, user_gps_location):
         # TODO It just takes the first location
