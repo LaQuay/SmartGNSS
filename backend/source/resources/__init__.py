@@ -7,6 +7,7 @@ from flask import Response as FlaskResponse
 from errors import api_errors as ApiErrorTypes
 from errors.api_errors import ApiError
 from repositories.api_repository import ApiRepository
+from repositories.geo_repository import GeoRepository
 from utils import JSONEncoder
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,8 @@ def exception_handler(func):
 
 class Resource(flask_restful.Resource):
     def __init__(self):
-        self.repository = ApiRepository()
+        self.api_repository = ApiRepository()
+        self.geo_repository = GeoRepository()
 
     method_decorators = [exception_handler]
 
