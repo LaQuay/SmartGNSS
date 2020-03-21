@@ -41,5 +41,7 @@ dependencies {
     compile 'com.google.android.gms:play-services-maps:11.0.2'
     compile project(':pseudorange')
     compile files('libs/achartengine-1.2.0.jar')
+    compile 'com.squareup.retrofit2:retrofit:2.3.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.3.0'
 }
 

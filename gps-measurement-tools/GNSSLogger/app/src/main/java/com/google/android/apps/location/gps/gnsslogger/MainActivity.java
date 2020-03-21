@@ -33,6 +33,7 @@ import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
@@ -139,6 +140,9 @@ public class MainActivity extends AppCompatActivity
     setContentView(R.layout.activity_main);
     buildGoogleApiClient();
     requestPermissionAndSetupFragments(this);
+
+    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+    StrictMode.setThreadPolicy(policy);
   }
 
   protected PendingIntent createActivityDetectionPendingIntent() {

@@ -35,16 +35,37 @@ import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.android.apps.location.gps.gnsslogger.LoggerFragment.UIFragmentComponent;
+
+//import org.apache.http.HttpResponse;
+//import org.apache.http.client.HttpClient;
+//import org.apache.http.client.methods.HttpPost;
+
+
+import net.codejava.networking.MultipartUtility;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
  * A GNSS logger to store information to a file.
@@ -217,7 +238,44 @@ public class FileLogger implements GnssListener {
     Uri fileURI =
         FileProvider.getUriForFile(mContext, BuildConfig.APPLICATION_ID + ".provider", mFile);
     emailIntent.putExtra(Intent.EXTRA_STREAM, fileURI);
-    getUiComponent().startActivity(Intent.createChooser(emailIntent, "Send log.."));
+    //getUiComponent().startActivity(Intent.createChooser(emailIntent, "Send log.."));
+
+
+
+/*
+
+    String url = "http://localhost";
+    //File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath(),
+    //        "yourfile");
+    File file = new File(fileURI.getPath());
+    try {
+      HttpClient httpclient = new DefaultHttpClient();
+
+      HttpPost httppost = new HttpPost(url);
+
+      InputStreamEntity reqEntity = new InputStreamEntity(
+              new FileInputStream(file), -1);
+      reqEntity.setContentType("binary/octet-stream");
+      reqEntity.setChunked(true); // Send in multiple parts if needed
+      httppost.setEntity(reqEntity);
+      HttpResponse response = httpclient.execute(httppost);
+      //Do something with response...
+      Toast.makeText(mContext, "HERE!!!", Toast.LENGTH_LONG).show();
+
+    } catch (Exception e) {
+      // show error
+    }
+
+*/
+    try {
+      //submitData(fileURI.getPath());
+      submitData(mFile);
+    } catch (Exception e){
+      Log.e("MDP", "exception", e);
+    }
+
+    Toast.makeText(mContext, "Call API from here!!!"+fileURI.getPath()+"\n", Toast.LENGTH_LONG).show();
+
     if (mFileWriter != null) {
       try {
         mFileWriter.flush();
@@ -229,6 +287,103 @@ public class FileLogger implements GnssListener {
       }
     }
   }
+
+  public boolean submitData2(String pathToFile) throws Exception{
+    URL url = new URL("http://07a96f3e.ngrok.io");
+    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+    try {
+      InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+      //readStream(in);
+    } finally {
+      urlConnection.disconnect();
+    }
+    return true;
+  }
+
+
+//  public boolean submitData(String pathToFile) throws Exception{
+  public boolean submitData(File mmfile) throws Exception{
+    String charset = "UTF-8";
+    File uploadFile1 = mmfile;
+    //File uploadFile2 = new File("e:/Test/PIC2.JPG");
+    String requestURL = "http://07a96f3e.ngrok.io/handle_form";
+
+
+      MultipartUtility multipart = new MultipartUtility(requestURL, charset);
+
+      multipart.addHeaderField("User-Agent", "CodeJava");
+      multipart.addHeaderField("Test-Header", "Header-Value");
+
+      multipart.addFormField("description", "Cool Pictures");
+      multipart.addFormField("keywords", "Java,upload,Spring");
+
+      multipart.addFilePart("fileUpload", uploadFile1);
+      //multipart.addFilePart("fileUpload", uploadFile2);
+
+      List<String> response = multipart.finish();
+
+      System.out.println("SERVER REPLIED:");
+
+      for (String line : response) {
+        System.out.println(line);
+      }
+
+    return true;
+  }
+
+
+/*
+  public boolean submitData(String pathToFile){
+    String baseUrl = "http://localhost:8000";
+    //Defining retrofit api service
+    Retrofit retrofit = new Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build();
+
+    File file = new File(pathToFile);
+    RequestBody requestBody = RequestBody.create(MediaType.parse("image/*"), file);
+    MultipartBody.Part fileupload = MultipartBody.Part.createFormData("file", file.getName(), requestBody);
+    RequestBody filename = RequestBody.create(MediaType.parse("text/plain"), file.getName());
+
+    ApiService service = retrofit.create(ApiService.class);
+    Call<PostResponse> call = service.postData(fileupload, filename);
+    //calling the api
+    call.enqueue(new Callback<PostResponse>() {
+      @Override
+      public void onResponse(Call<PostResponse> call, Response<PostResponse> response) {
+        if(response.isSuccessful()){
+          Toast.makeText(mContext, response.body().getSuccess(), Toast.LENGTH_LONG).show();
+        }
+      }
+
+      @Override
+      public void onFailure(Call<PostResponse> call, Throwable t) {
+        Toast.makeText(mContext, t.getMessage(), Toast.LENGTH_LONG).show();
+      }
+    });
+  }
+
+  public static String convertStreamToString(InputStream is) throws Exception {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+    StringBuilder sb = new StringBuilder();
+    String line = null;
+    while ((line = reader.readLine()) != null) {
+      sb.append(line).append("\n");
+    }
+    reader.close();
+    return sb.toString();
+  }
+
+  public static String getStringFromFile (String filePath) throws Exception {
+    File fl = new File(filePath);
+    FileInputStream fin = new FileInputStream(fl);
+    String ret = convertStreamToString(fin);
+    //Make sure you close all streams.
+    fin.close();
+    return ret;
+  }
+*/
 
   @Override
   public void onProviderEnabled(String provider) {}
