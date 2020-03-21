@@ -1,0 +1,22 @@
+version: '3.7'
+services:
+  # Database
+  postgres:
+    image: postgres:11.2-alpine
+    volumes:
+      - /var/opt/api/pg_data:/var/lib/postgresql/data/pgdata
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+
+  # Database viewer
+  pgadmin:
+    image: dpage/pgadmin4:4.3
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@domain.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    restart: unless-stopped
+    ports:
+      - "5433:80"
