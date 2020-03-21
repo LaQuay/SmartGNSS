@@ -12,3 +12,6 @@ router.
 
 There is the possibility of sending coordinates to reduce the search
 area.
+
+_NOTE: Response is hardcoded since they have a limitation of 5 queries
+per day._
