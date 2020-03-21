@@ -14,6 +14,11 @@ entry_parser = reqparse.RequestParser()
 entry_parser.add_argument("value", type=str)
 entry_parser.add_argument("date", type=str)
 
+location_parser = reqparse.RequestParser()
+location_parser.add_argument("gps", type=dict)
+location_parser.add_argument("ip", type=dict)
+location_parser.add_argument("wifi", type=dict)
+
 
 class EntryHandler:
     class Entries(Resource):
@@ -97,7 +102,7 @@ class EntryHandler:
 class GeolocationHandler:
     class IP(Resource):
         def get(self, ip):
-            response = self.geo_repository.get_location_from_ip(ip)
+            response = self.geo_repository.get_info_from_ip(ip)
             print(response)
 
             if response:
@@ -106,9 +111,50 @@ class GeolocationHandler:
 
     class WIFI(Resource):
         def get(self, wifi_name):
-            response = self.geo_repository.get_location_from_wifi(wifi_name)
+            response = self.geo_repository.get_info_from_wifi(wifi_name)
 
             print(response)
             if response:
                 return Response.success(response)
             return Response.error(GENERIC)
+
+    class Location(Resource):
+        def get(self):
+            args = location_parser.parse_args()
+
+            gps_info = args.get("gps", None)
+            gps_latlon = gps_info.get("latlon", None)
+
+            ip_info = args.get("ip", None)
+            ip_address = None
+            if ip_info is not None:
+                ip_address = ip_info.get("address", None)
+
+            wifi_info = args.get("wifi", None)
+            wifi_ssid = None
+            if wifi_info is not None:
+                wifi_ssid = wifi_info.get("ssid", None)
+
+            ip_locations = self.geo_repository.get_locations_from_ip(ip_address)
+            wifi_locations = self.geo_repository.get_locations_from_wifi(wifi_ssid)
+
+            score_ip = self.geo_repository.get_ip_score(ip_locations, gps_latlon)
+
+            score_wifi = self.geo_repository.get_wifi_score(wifi_locations, gps_latlon)
+
+            return Response.success({
+                "info": {
+                    "info": f"Score obtained for location {gps_latlon}",
+                    "help": "Score between 0 and 1 (max). From correlating the different inputs "
+                            "given by the user",
+                    "available_inputs": ["gps, ip, wifi"]
+                },
+                "ip": {
+                    "locations": ip_locations,
+                    "score": round(score_ip, 4)
+                },
+                "wifi": {
+                    "locations": wifi_locations,
+                    "score": round(score_wifi, 4)
+                }
+            })
