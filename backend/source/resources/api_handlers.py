@@ -1,7 +1,9 @@
 import logging
+import time
 
 import requests
 from flask_restful import reqparse
+import werkzeug
 
 from errors.api_errors import GENERIC, NOT_EXISTS_ID, FIELD_NOT_VALID
 from models.models import Entry
@@ -14,6 +16,13 @@ logger = logging.getLogger(__name__)
 entry_parser = reqparse.RequestParser()
 entry_parser.add_argument("value", type=str)
 entry_parser.add_argument("date", type=str)
+
+entry_parser.add_argument("user_file", type=werkzeug.datastructures.FileStorage, location="files")
+
+JASON_API_KEY = "ARGONAUT.PUB.609B-4D9E-80B7"
+JASON_SECRET_TOKEN = "3254E4-1E0D4A-922C6E-B3E631-9D3228"
+FINISHED_RESPONSE_STATUS = "FINISHED"
+SLEEP_TIME = 5
 
 
 class EntryHandler:
@@ -106,3 +115,42 @@ class GeolocationHandler:
             if response:
                 return Response.success(response.json())
             return Response.error(GENERIC)
+
+    class GNSS(Resource):
+        def post(self):
+            args = entry_parser.parse_args()
+            user_file = args["user_file"]
+
+            # TODO: read position from file
+
+            headers = {
+                'accept': 'application/json',
+                'Content-Type': 'multipart/form-data',
+                'ApiKey': f'{JASON_API_KEY}',
+            }
+            files = {
+                'type': (None, 'GNSS'),
+                'rover_file': ('user_file.txt', user_file),
+            }
+            response = requests.post(f'http://api-argonaut.rokubun.cat/api/processes?token={JASON_SECRET_TOKEN}', headers=headers, files=files)
+            request_id = response.json()["id"]
+
+            while True:
+                response = requests.get(f'http://api-argonaut.rokubun.cat/api/processes/{request_id}?token={JASON_SECRET_TOKEN}',
+                                        headers=headers, files=files)
+                request_status = response["process"]["status"]
+                if request_status == FINISHED_RESPONSE_STATUS:
+                    result_url = response["process"]["url"]
+                    break
+                time.sleep(SLEEP_TIME)
+
+            # TODO
+            # Unzip result
+            # Read position from file
+            # Compare with provided position
+            # If jason_position == provided position
+            # Return True
+            # Else
+            # Return False
+
+            return Response.success({"data": True})
