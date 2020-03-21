@@ -2,6 +2,7 @@ import logging
 
 import requests
 from flask_restful import reqparse
+from requests.auth import HTTPBasicAuth
 
 from errors.api_errors import GENERIC, NOT_EXISTS_ID, FIELD_NOT_VALID
 from models.models import Entry
@@ -95,14 +96,34 @@ class EntryHandler:
             return Response.error(NOT_EXISTS_ID)
 
 
-ipinfotoken = "6f49f36f5c1a2b"
-
-
 class GeolocationHandler:
+    # IPINFO
+    ipinfotoken = "6f49f36f5c1a2b"
+
+    # WIGLE
+    wigle_username = 'AID9948069cf19b06660140b30dfebc3fb4'
+    wigle_password = '8420f580c5541b8fac2a556327258450'
+
     class IP(Resource):
         def get(self, ip):
-            response = requests.get(f"https://www.ipinfo.io/{ip}?token={ipinfotoken}")
+            response = requests.get(
+                f"https://www.ipinfo.io/{ip}?token={GeolocationHandler.ipinfotoken}")
 
+            print(response)
             if response:
                 return Response.success(response.json())
+            return Response.error(GENERIC)
+
+    class WIFI(Resource):
+        def get(self, wifi_name):
+            payload = {'ssidlike': wifi_name}
+
+            response = requests.get(url='https://api.wigle.net/api/v2/network/search',
+                                    params=payload,
+                                    auth=HTTPBasicAuth(GeolocationHandler.wigle_username,
+                                                       GeolocationHandler.wigle_password)).json()
+
+            print(response)
+            if response:
+                return Response.success(response)
             return Response.error(GENERIC)
