@@ -1,8 +1,9 @@
 import logging
 
+import requests
 from flask_restful import reqparse
 
-from errors.api_errors import GENERIC, NOT_EXISTS_ID, EXISTS_ID, FIELD_NOT_VALID
+from errors.api_errors import GENERIC, NOT_EXISTS_ID, FIELD_NOT_VALID
 from models.models import Entry
 from resources import Resource, Response
 from translators import api_translators as translator
@@ -92,3 +93,16 @@ class EntryHandler:
                 if result:
                     return Response.success({"internal_id": result})
             return Response.error(NOT_EXISTS_ID)
+
+
+ipinfotoken = "6f49f36f5c1a2b"
+
+
+class GeolocationHandler:
+    class IP(Resource):
+        def get(self, ip):
+            response = requests.get(f"https://www.ipinfo.io/{ip}?token={ipinfotoken}")
+
+            if response:
+                return Response.success(response.json())
+            return Response.error(GENERIC)
