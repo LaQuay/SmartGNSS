@@ -62,7 +62,9 @@ Server: Werkzeug/1.0.0 Python/3.7.2
             "locations": [
                 "41.379515, 2.141006"
             ],
-            "score": 0.9587
+            "score": [
+                0.9587
+            ]
         },
         "ip": {
             "locations": [

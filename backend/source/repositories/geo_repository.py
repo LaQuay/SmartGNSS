@@ -160,4 +160,4 @@ class GeoRepository:
         distance = haversine(first_gps_latlon, second_gps_latlon)
         score = distance / MAX_SCORE
 
-        return round(score, 4)
+        return [round(score, 4)]
