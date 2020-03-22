@@ -1,6 +1,10 @@
 # SmartGNSS
 
 ## Geolocation
+
+### Via GNSS RAW
+_To be filled_
+
 ### Via IP
 Using `ipinfo.io` within its free tier. Sending an IP address.
 
@@ -21,24 +25,29 @@ per day._
 ### Get score for user information
 
 #### Send
-`GET localhost:5000/geolocate/`
-
-Body
-```json 
-{
-    "gps": {
-        "latlon": "37.386,-122.1"
-    },
-    "ip": {
-        "address": "8.8.8.8"
-    },
-    "wifi": {
-        "ssid": "eduroam"
-    }
-}
+```
+POST /geolocate/ HTTP/1.1
+Host: localhost:5000
+Content-Type: multipart/form-data; boundary=--------------------------016850107323449250282000
+Content-Length: 267119
+Connection: keep-alive
+Content-Disposition: form-data; name="user_file"; 
+filename="user_log_1.txt"
+Content-Disposition: form-data; name="gps_latlon"
+37.386,-122.1
+Content-Disposition: form-data; name="ip_address"
+8.8.8.8
+Content-Disposition: form-data; name="wifi_ssid"
+eduroam
 ```
 
 #### Response
+```
+HTTP/1.0 200 OK
+Content-Type: application/json
+Server: Werkzeug/1.0.0 Python/3.7.2
+```
+
 ```json
 {
     "data": {
@@ -46,33 +55,76 @@ Body
             "info": "Score obtained for location 37.386,-122.1",
             "help": "Score between 0 and 1 (max). From correlating the different inputs given by the user",
             "available_inputs": [
-                "gps, ip, wifi"
+                "gps, gnss, ip, wifi"
             ]
+        },
+        "gnss": {
+            "locations": [
+                "41.3716595259, 2.13015067745"
+            ],
+            "score": 0.9587
         },
         "ip": {
             "locations": [
                 "37.3860,-122.0838"
             ],
-            "score": 0.0001
+            "score": [
+                0.0001
+            ]
         },
         "wifi": {
             "locations": [
-                "41.390132,2.112898"
+                "41.390132,2.112898",
+                "41.381432,2.139105"
             ],
-            "score": 0.9585
+            "score": [
+                0.9585,
+                0.9587
+            ]
         }
     },
     "error": null
 }
 ```
 
+### Geolocate a GNSS Raw Data
+
+#### Send 
+```
+POST /geolocate/gnss/41.1,4.1 HTTP/1.1
+Host: localhost:5000
+Content-Type: multipart/form-data; boundary=--------------------------016850107323449250282000
+Content-Length: 266766
+Connection: keep-alive
+Content-Disposition: form-data; name="user_file"; 
+filename="user_log_1.txt"
+```
+
+#### Response
+```
+HTTP/1.0 200 OK
+Content-Type: application/json
+Server: Werkzeug/1.0.0 Python/3.7.2
+```
+
+```json
+{"data": 0.0167, "error": null}
+```
 
 ### Geolocate an IP
 
 #### Send 
-`GET localhost:5000/geolocate/ip/8.8.8.8`
+```
+GET /geolocate/ip/8.8.8.8 HTTP/1.1
+Host: localhost:5000
+```
 
 #### Response
+```
+HTTP/1.0 200 OK
+Content-Type: application/json
+Server: Werkzeug/1.0.0 Python/3.7.2
+```
 ```json
 {
     "data": {
@@ -93,10 +145,17 @@ Body
 ### Geolocate a WiFi SSID
 
 #### Send
-`GET localhost:5000/geolocate/wifi/eduroam`
+```
+GET /geolocate/wifi/eduroam HTTP/1.1
+Host: localhost:5000
+```
 
 #### Response
-
+```
+HTTP/1.0 200 OK
+Content-Type: application/json
+Server: Werkzeug/1.0.0 Python/3.7.2
+```
 ```json
 {
     "data": {
