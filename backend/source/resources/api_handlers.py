@@ -1,7 +1,15 @@
 import logging
+import time
+import urllib.request
+import os
+import json
 
 from flask_restful import reqparse
+import werkzeug
+from haversine import haversine
+import requests
 
+import utils
 from errors.api_errors import GENERIC, NOT_EXISTS_ID, FIELD_NOT_VALID
 from models.models import Entry
 from resources import Resource, Response
@@ -18,6 +26,13 @@ location_parser = reqparse.RequestParser()
 location_parser.add_argument("gps", type=dict)
 location_parser.add_argument("ip", type=dict)
 location_parser.add_argument("wifi", type=dict)
+
+entry_parser.add_argument("user_file", type=werkzeug.datastructures.FileStorage, location="files")
+
+JASON_API_KEY = "ARGONAUT.PUB.609B-4D9E-80B7"
+JASON_SECRET_TOKEN = "1DD6EB-D09E73-17FEB2-41952F-5BB20C"
+FINISHED_RESPONSE_STATUS = "FINISHED"
+SLEEP_TIME = 5
 
 
 class EntryHandler:
@@ -108,6 +123,59 @@ class GeolocationHandler:
             if response:
                 return Response.success(response.json())
             return Response.error(GENERIC)
+
+    class GNSS(Resource):
+        def post(self, gps):
+            gps_split = gps.split(",")
+            gps_latlon = [float(gps_split[0]), float(gps_split[1])]
+
+            raw_gnss_args = entry_parser.parse_args()
+            user_file = raw_gnss_args["user_file"]
+            user_file_filename = user_file.filename
+            user_file.save(user_file_filename)
+
+            os.system(f"curl -X POST  "
+                      f"-H 'accept: application/json' "
+                      f"-H 'Content-Type: multipart/form-data' "
+                      f"-H 'ApiKey: {JASON_API_KEY}' "
+                      f"-F token={JASON_SECRET_TOKEN} "
+                      f"-F type=GNSS "
+                      f"-F 'rover_file=@{user_file_filename}' "
+                      f"'http://api-argonaut.rokubun.cat/api/processes/' > tmp")
+
+            request_id = json.loads(open("tmp").read())["id"]
+            os.system("rm tmp")
+
+            headers = {
+                'accept': 'application/json',
+                'Content-Type': 'multipart/form-data',
+                'ApiKey': f'{JASON_API_KEY}'
+            }
+
+            while True:
+                response = requests.get(
+                    f'http://api-argonaut.rokubun.cat/api/processes/{request_id}?token={JASON_SECRET_TOKEN}',
+                    headers=headers)
+                request_status = response.json()["process"]["status"]
+                if request_status == FINISHED_RESPONSE_STATUS:
+                    results = response.json()["results"]
+                    for result in results:
+                        if result["process_id"] == request_id:
+                            result_url = result["url"]
+                    break
+                time.sleep(SLEEP_TIME)
+
+            # Unzip result
+            result_zip = urllib.request.urlretrieve(result_url)
+            utils.unzip_result(result_zip[0])
+
+            # Read position from file
+            csv_filename = user_file_filename.split(".")[0] + "_position_spp.csv"
+            coords = utils.jason_csv_to_coords(f"data/{csv_filename}")
+
+            d = haversine(tuple(coords), tuple(gps_latlon))
+
+            return Response.success({"data": d / 10000})
 
     class WIFI(Resource):
         def get(self, wifi_name):

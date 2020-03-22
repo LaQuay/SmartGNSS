@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Utils methods.
-"""
 import logging
 import json
 from datetime import datetime
+import statistics
+import zipfile
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,3 +39,20 @@ db_uri = construct_db_uri(
         "database": "api_db"
     }
 )
+
+
+def jason_csv_to_coords(jason_csv):
+    lats = []
+    lons = []
+    f = open(jason_csv)
+    for line in f:
+        if line[0] != "#":
+            line_split = line.split(",")
+            lats.append(float(line_split[2]))
+            lons.append(float(line_split[3]))
+    return [statistics.mean(lats), statistics.mean(lons)]
+
+
+def unzip_result(zip_file):
+    with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+        zip_ref.extractall("data")

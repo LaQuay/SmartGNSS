@@ -24,5 +24,8 @@ class Resources:
         api.add_resource(GeolocationHandler.IP, '/geolocate/ip/<string:ip>',
                          strict_slashes=False)
 
+        api.add_resource(GeolocationHandler.GNSS, '/geolocate/gnss/<string:gps>',
+                         strict_slashes=False)
+        
         api.add_resource(GeolocationHandler.WIFI, '/geolocate/wifi/<string:wifi_name>',
                          strict_slashes=False)
