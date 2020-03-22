@@ -113,14 +113,13 @@ class GeolocationHandler:
             return Response.error(GENERIC)
 
     class GNSS(Resource):
-        def post(self, gps):
+        def post(self):
             raw_gnss_args = location_parser.parse_args()
             user_file = raw_gnss_args["user_file"]
 
             user_location_from_file = self.geo_repository.get_locations_from_gnss(user_file)
-            score = self.geo_repository.get_gnss_score(user_location_from_file, gps)
 
-            return Response.success(score)
+            return Response.success(user_location_from_file)
 
     class WIFI(Resource):
         def get(self, wifi_name):

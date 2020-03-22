@@ -91,7 +91,7 @@ Server: Werkzeug/1.0.0 Python/3.7.2
 
 #### Send 
 ```
-POST /geolocate/gnss/41.1,4.1 HTTP/1.1
+POST /geolocate/gnss/ HTTP/1.1
 Host: localhost:5000
 Content-Type: multipart/form-data; boundary=--------------------------016850107323449250282000
 Content-Length: 266766
@@ -108,7 +108,7 @@ Server: Werkzeug/1.0.0 Python/3.7.2
 ```
 
 ```json
-{"data": 0.0167, "error": null}
+{"data": "41.379515, 2.141006", "error": null}
 ```
 
 ### Geolocate an IP
