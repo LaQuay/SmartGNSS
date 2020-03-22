@@ -42,6 +42,7 @@ import com.google.android.apps.location.gps.gnsslogger.LoggerFragment.UIFragment
 
 
 import net.codejava.networking.MultipartUtility;
+import net.codejava.networking.MultipartUtilityV2;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -267,7 +268,18 @@ public class FileLogger implements GnssListener {
     }
 
 */
+
+
+
+
+
+
+
     try {
+      Log.e("MDP", "1");
+      Log.e("MDP", getStringFromFile(mFile));
+      Log.e("MDP", "2");
+      
       //submitData(fileURI.getPath());
       submitData(mFile);
     } catch (Exception e){
@@ -288,6 +300,31 @@ public class FileLogger implements GnssListener {
     }
   }
 
+  public static String convertStreamToString(InputStream is) throws Exception {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+    StringBuilder sb = new StringBuilder();
+    String line = null;
+    while ((line = reader.readLine()) != null) {
+      sb.append(line).append("\n");
+    }
+    reader.close();
+    return sb.toString();
+  }
+
+  public static String getStringFromFile (File fl) throws Exception {
+    //File fl = new File(filePath);
+    FileInputStream fin = new FileInputStream(fl);
+    String ret = convertStreamToString(fin);
+    //Make sure you close all streams.
+    fin.close();
+    return ret;
+  }
+
+
+
+
+
+
   public boolean submitData2(String pathToFile) throws Exception{
     URL url = new URL("http://07a96f3e.ngrok.io");
     HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -306,20 +343,24 @@ public class FileLogger implements GnssListener {
     String charset = "UTF-8";
     File uploadFile1 = mmfile;
     //File uploadFile2 = new File("e:/Test/PIC2.JPG");
-    String requestURL = "http://07a96f3e.ngrok.io/handle_form";
+    //String requestURL = "http://07a96f3e.ngrok.io/handle_form";
+    String requestURL = "http://fa61c1d1.ngrok.io/handle_form";
 
 
-      MultipartUtility multipart = new MultipartUtility(requestURL, charset);
+      //MultipartUtility multipart = new MultipartUtility(requestURL, charset);
+      MultipartUtilityV2 multipart = new MultipartUtilityV2(requestURL);
 
-      multipart.addHeaderField("User-Agent", "CodeJava");
-      multipart.addHeaderField("Test-Header", "Header-Value");
+      //multipart.addHeaderField("User-Agent", "CodeJava");
+      //multipart.addHeaderField("Test-Header", "Header-Value");
 
       multipart.addFormField("description", "Cool Pictures");
       multipart.addFormField("keywords", "Java,upload,Spring");
 
       multipart.addFilePart("fileUpload", uploadFile1);
+      //multipart.addFilePart("user_file", uploadFile1);
       //multipart.addFilePart("fileUpload", uploadFile2);
 
+      /*
       List<String> response = multipart.finish();
 
       System.out.println("SERVER REPLIED:");
@@ -327,6 +368,10 @@ public class FileLogger implements GnssListener {
       for (String line : response) {
         System.out.println(line);
       }
+      */
+      String response = multipart.finish();
+    System.out.println("SERVER REPLIED:");
+
 
     return true;
   }
