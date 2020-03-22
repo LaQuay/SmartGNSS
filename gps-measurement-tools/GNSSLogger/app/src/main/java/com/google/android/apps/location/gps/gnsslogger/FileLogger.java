@@ -275,16 +275,7 @@ public class FileLogger implements GnssListener {
 
 
 
-    try {
-      Log.e("MDP", "1");
-      Log.e("MDP", getStringFromFile(mFile));
-      Log.e("MDP", "2");
-      
-      //submitData(fileURI.getPath());
-      submitData(mFile);
-    } catch (Exception e){
-      Log.e("MDP", "exception", e);
-    }
+
 
     Toast.makeText(mContext, "Call API from here!!!"+fileURI.getPath()+"\n", Toast.LENGTH_LONG).show();
 
@@ -298,6 +289,23 @@ public class FileLogger implements GnssListener {
         return;
       }
     }
+
+
+    try {
+      Log.e("MDP", "1");
+      Log.e("MDP", getStringFromFile(mFile));
+      //File ff = new File(fileURI.getPath());
+      //Log.e("MDP", getStringFromFile(ff));
+      Log.e("MDP", "2");
+
+      //submitData(fileURI.getPath());
+      submitData(mFile);
+    } catch (Exception e){
+      Log.e("MDP", "exception", e);
+    }
+
+
+
   }
 
   public static String convertStreamToString(InputStream is) throws Exception {
