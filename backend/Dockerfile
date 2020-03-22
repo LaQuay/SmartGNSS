@@ -7,7 +7,7 @@ COPY requirements ./requirements/
 ENV HOME /root
 
 # Install psycopg2 requirements
-RUN apk add postgresql-dev gcc python3-dev musl-dev
+RUN apk add postgresql-dev gcc python3-dev musl-dev curl
 
 # Install requirements
 RUN pip install --upgrade pip

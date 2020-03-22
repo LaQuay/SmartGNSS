@@ -1,10 +1,13 @@
 import logging
 import time
 import urllib.request
+import os
+import json
 
 from flask_restful import reqparse
 import werkzeug
 from haversine import haversine
+import requests
 
 import utils
 from errors.api_errors import GENERIC, NOT_EXISTS_ID, FIELD_NOT_VALID
@@ -27,10 +30,9 @@ location_parser.add_argument("wifi", type=dict)
 entry_parser.add_argument("user_file", type=werkzeug.datastructures.FileStorage, location="files")
 
 JASON_API_KEY = "ARGONAUT.PUB.609B-4D9E-80B7"
-JASON_SECRET_TOKEN = "3254E4-1E0D4A-922C6E-B3E631-9D3228"
+JASON_SECRET_TOKEN = "1DD6EB-D09E73-17FEB2-41952F-5BB20C"
 FINISHED_RESPONSE_STATUS = "FINISHED"
 SLEEP_TIME = 5
-
 
 
 class EntryHandler:
@@ -124,43 +126,56 @@ class GeolocationHandler:
 
     class GNSS(Resource):
         def post(self, gps):
-            gps_latlon = gps.split(",")
+            gps_split = gps.split(",")
+            gps_latlon = [float(gps_split[0]), float(gps_split[1])]
 
             raw_gnss_args = entry_parser.parse_args()
             user_file = raw_gnss_args["user_file"]
+            user_file_filename = user_file.filename
+            user_file.save(user_file_filename)
+
+            os.system(f"curl -X POST  "
+                      f"-H 'accept: application/json' "
+                      f"-H 'Content-Type: multipart/form-data' "
+                      f"-H 'ApiKey: {JASON_API_KEY}' "
+                      f"-F token={JASON_SECRET_TOKEN} "
+                      f"-F type=GNSS "
+                      f"-F 'rover_file=@{user_file_filename}' "
+                      f"'http://api-argonaut.rokubun.cat/api/processes/' > tmp")
+
+            request_id = json.loads(open("tmp").read())["id"]
+            os.system("rm tmp")
 
             headers = {
                 'accept': 'application/json',
                 'Content-Type': 'multipart/form-data',
-                'ApiKey': f'{JASON_API_KEY}',
+                'ApiKey': f'{JASON_API_KEY}'
             }
-            files = {
-                'type': (None, 'GNSS'),
-                'rover_file': ('user_file.txt', user_file),
-            }
-            response = requests.post(f'http://api-argonaut.rokubun.cat/api/processes?token={JASON_SECRET_TOKEN}', headers=headers, files=files)
-            request_id = response.json()["id"]
 
             while True:
-                response = requests.get(f'http://api-argonaut.rokubun.cat/api/processes/{request_id}?token={JASON_SECRET_TOKEN}',
-                                        headers=headers, files=files)
-                request_status = response["process"]["status"]
+                response = requests.get(
+                    f'http://api-argonaut.rokubun.cat/api/processes/{request_id}?token={JASON_SECRET_TOKEN}',
+                    headers=headers)
+                request_status = response.json()["process"]["status"]
                 if request_status == FINISHED_RESPONSE_STATUS:
-                    result_url = response["process"]["url"]
+                    results = response.json()["results"]
+                    for result in results:
+                        if result["process_id"] == request_id:
+                            result_url = result["url"]
                     break
                 time.sleep(SLEEP_TIME)
 
             # Unzip result
             result_zip = urllib.request.urlretrieve(result_url)
-            results_folder = (result_zip.split("/")[-1]).split(".")[0]
-            utils.unzip_result(result_zip)
+            utils.unzip_result(result_zip[0])
 
             # Read position from file
-            coords = utils.jason_csv_to_coords(f"data/{results_folder}")
+            csv_filename = user_file_filename.split(".")[0] + "_position_spp.csv"
+            coords = utils.jason_csv_to_coords(f"data/{csv_filename}")
 
-            d = haversine(coords, gps_latlon)
+            d = haversine(tuple(coords), tuple(gps_latlon))
 
-            return Response.success({"data": d/10000})
+            return Response.success({"data": d / 10000})
 
     class WIFI(Resource):
         def get(self, wifi_name):

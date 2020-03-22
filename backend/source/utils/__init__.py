@@ -44,10 +44,12 @@ db_uri = construct_db_uri(
 def jason_csv_to_coords(jason_csv):
     lats = []
     lons = []
-    for line in jason_csv:
-        line_split = line.split(",")
-        lats.append(line_split[2])
-        lons.append(line_split[3])
+    f = open(jason_csv)
+    for line in f:
+        if line[0] != "#":
+            line_split = line.split(",")
+            lats.append(float(line_split[2]))
+            lons.append(float(line_split[3]))
     return [statistics.mean(lats), statistics.mean(lons)]
 
 
