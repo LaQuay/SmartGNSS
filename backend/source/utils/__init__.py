@@ -50,7 +50,10 @@ def jason_csv_to_coords(jason_csv):
             line_split = line.split(",")
             lats.append(float(line_split[2]))
             lons.append(float(line_split[3]))
-    return [statistics.mean(lats), statistics.mean(lons)]
+    coords = f"{statistics.mean(lats), statistics.mean(lons)}"
+
+    coords = coords.replace("(", "").replace(")", "")
+    return coords
 
 
 def unzip_result(zip_file):

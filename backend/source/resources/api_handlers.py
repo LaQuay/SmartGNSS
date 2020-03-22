@@ -16,11 +16,11 @@ entry_parser.add_argument("value", type=str)
 entry_parser.add_argument("date", type=str)
 
 location_parser = reqparse.RequestParser()
-location_parser.add_argument("gps", type=dict)
-location_parser.add_argument("ip", type=dict)
-location_parser.add_argument("wifi", type=dict)
-
-entry_parser.add_argument("user_file", type=werkzeug.datastructures.FileStorage, location="files")
+location_parser.add_argument("user_file", type=werkzeug.datastructures.FileStorage,
+                             location="files")
+location_parser.add_argument("gps_latlon", type=str)
+location_parser.add_argument("ip_address", type=str)
+location_parser.add_argument("wifi_ssid", type=str)
 
 
 class EntryHandler:
@@ -114,14 +114,11 @@ class GeolocationHandler:
 
     class GNSS(Resource):
         def post(self, gps):
-            gps_split = gps.split(",")
-            gps_latlon = [float(gps_split[0]), float(gps_split[1])]
-
-            raw_gnss_args = entry_parser.parse_args()
+            raw_gnss_args = location_parser.parse_args()
             user_file = raw_gnss_args["user_file"]
 
             user_location_from_file = self.geo_repository.get_locations_from_gnss(user_file)
-            score = self.geo_repository.get_gnss_score(user_location_from_file, gps_latlon)
+            score = self.geo_repository.get_gnss_score(user_location_from_file, gps)
 
             return Response.success(score)
 
@@ -138,23 +135,10 @@ class GeolocationHandler:
         def post(self):
             args = location_parser.parse_args()
 
-            gps_info = args.get("gps", None)
-            gps_latlon = None
-            if gps_info is not None:
-                gps_latlon = gps_info.get("latlon", None)
-
-            ip_info = args.get("ip", None)
-            ip_address = None
-            if ip_info is not None:
-                ip_address = ip_info.get("address", None)
-
-            wifi_info = args.get("wifi", None)
-            wifi_ssid = None
-            if wifi_info is not None:
-                wifi_ssid = wifi_info.get("ssid", None)
-
-            raw_gnss_args = entry_parser.parse_args()
-            user_file = raw_gnss_args["user_file"]
+            gps_latlon = args["gps_latlon"]
+            ip_address = args["ip_address"]
+            wifi_ssid = args["wifi_ssid"]
+            user_file = args["user_file"]
 
             print("Obtaining IP Locations")
             ip_locations = self.geo_repository.get_locations_from_ip(ip_address)
@@ -180,7 +164,7 @@ class GeolocationHandler:
                     "available_inputs": ["gps, gnss, ip, wifi"]
                 },
                 "gnss": {
-                    "locations": gnss_location,
+                    "locations": [gnss_location],
                     "score": score_gnss
                 },
                 "ip": {

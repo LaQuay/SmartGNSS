@@ -153,7 +153,11 @@ class GeoRepository:
 
     @staticmethod
     def get_gnss_score(user_gps_location_from_file, user_gps_location):
-        distance = haversine(tuple(user_gps_location_from_file), tuple(user_gps_location))
+        first_gps_latlon = [float(user_gps_location_from_file.split(",")[0]),
+                            float(user_gps_location_from_file.split(",")[1])]
+        second_gps_latlon = [float(user_gps_location.split(",")[0]),
+                             float(user_gps_location.split(",")[1])]
+        distance = haversine(first_gps_latlon, second_gps_latlon)
         score = distance / MAX_SCORE
 
         return round(score, 4)
