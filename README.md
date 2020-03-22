@@ -3,7 +3,7 @@
 ## Geolocation
 
 ### Via GNSS RAW
-_To be filled_
+Using Rokubun's Jason service (https://jason.rokubun.cat), we send Android's GNSS raw data and compare the resulting coordinates with the user's provided coordinates. 
 
 ### Via IP
 Using `ipinfo.io` within its free tier. Sending an IP address.
